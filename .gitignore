@@ -1,0 +1,165 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# Sensitive Information - IMPORTANT for open source
+*.env
+*.env.*
+!*.env.example
+.env.local
+.env.development
+.env.test
+.env.production
+config/secrets.json
+secrets.json
+*.pem
+*.key
+*.cert
+*.p12
+*.jks
+key.properties
+google-services.json
+GoogleService-Info.plist
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+/coverage/
+.flutter-plugins-dependencies
+.packages
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Backend specific
+backend/**/node_modules/
+backend/**/.env
+backend/**/.env.*
+!backend/**/.env.example
+backend/**/package-lock.json
+backend/**/venv/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/logs/
+backend/**/.DS_Store
+backend/**/start-services.bat
+backend/**/*.db
+backend/**/*.sqlite
+backend/**/*.sqlite3
+
+# Figma-UI (React/Vite)
+Figma-UI/node_modules/
+Figma-UI/dist/
+Figma-UI/.env
+Figma-UI/.env.local
+Figma-UI/.env.development.local
+Figma-UI/.env.test.local
+Figma-UI/.env.production.local
+Figma-UI/package-lock.json
+
+# IDE and OS specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Gradle (Android)
+.gradle/
+.kotlin/
+local.properties
+
+# Build outputs
+build/
+dist/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~

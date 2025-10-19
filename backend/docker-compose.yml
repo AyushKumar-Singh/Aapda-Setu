@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/aapda_setu
+    depends_on:
+      - mongo
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "5002:5002"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/aapda_setu
+    depends_on:
+      - mongo
+
+  report-service:
+    build: ./report-service
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/aapda_setu
+      - AI_SERVICE_URL=http://ai-service:8000
+    depends_on:
+      - mongo
+      - ai-service
+
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=development
+
+  mongo:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

@@ -1,0 +1,20 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "- Node.js 18+ - Python 3.9+ - MongoDB Atlas account (or local MongoDB)",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start:api": "cd api-gateway && npm start",
+    "start:auth": "cd auth-service && npm start",
+    "start:report": "cd report-service && npm start",
+    "start:ai": "cd ai-service && python app.py",
+    "start:all": "concurrently \"npm:start:api\" \"npm:start:auth\" \"npm:start:report\" \"npm:start:ai\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
