@@ -1,84 +1,166 @@
-# 🌐 Aapda Setu — AI-Powered Emergency & Disaster Response App
+# 🌐 Aapda Setu — AI-Powered Emergency & Disaster Response Platform  
+**Real-time Alerts • AI Prioritization • Community Reporting • Geo-Intelligence**
 
-Aapda Setu is an innovative mobile application designed to provide **real-time disaster alerts**, **AI-powered insights**, and **community-based emergency reporting**.  
-It bridges citizens, responders, NGOs, and authorities to ensure faster coordination and reduce the impact of disasters using **AI and crowd intelligence**.
+Aapda Setu is an AI-driven emergency response system designed to deliver **instant disaster alerts**, **AI-based prioritization**, and **crowd-verified reporting**.  
+Built for citizens, responders, NGOs, and authorities, it creates a unified ecosystem for **faster, safer, and smarter disaster coordination**.
 
 ---
 
-## 📱 App Overview
+## 🚀 Overview  
+Aapda Setu enables users to:
 
-### **Objective**
-To create a unified mobile platform that delivers **real-time disaster alerts** and **location-based warnings**, allows users to **report incidents**, and automatically notifies nearby users (within 5 km) and relevant departments in case of emergencies.
+- Receive **real-time alerts** for disasters (fire, flood, earthquake, etc.)  
+- Report emergencies with **verified crowd intelligence**  
+- Use an **AI agent** for guidance and safety information  
+- Get **location-based notifications** within a 5 km radius  
+- Stay informed even in low-connectivity areas through **offline SMS mode**
 
-### **Key Features**
-- 🔥 **5 km Fire Alert System** – Detects fire reports and alerts nearby users & local fire departments.  
-- 🤖 **AI-Powered Alert Classification** – Smart prioritization of alerts and reports.  
-- 🧭 **Community-Based Reporting** – Verified and trusted user system.  
-- 📶 **Offline Mode** – SMS alerts for low-connectivity areas.  
-- 💬 **AI Chatbot** – Provides emergency guidance and information.  
-- 🛡️ **Misinformation Control** – AI moderation and cross-verification with official data.
+It integrates **AI, geofencing, community validation, and misinformation control** to deliver reliable, real-time emergency intelligence.
+
+---
+
+## 🎯 Objectives  
+- Provide fast and accurate emergency alerts  
+- Reduce misinformation in disaster reporting  
+- Enable community-powered validation  
+- Automate communication with authorities  
+- Enhance public safety using predictive models & geo-intelligence  
+
+---
+
+## 🔥 Key Features
+
+### **🔥 5 km Fire Alert System**
+- Detects fire-related reports automatically  
+- Alerts users within a 5 km radius  
+- Auto-notifies the nearest fire department  
+
+---
+
+### **🤖 AI-Powered Alert Classification**
+- Prioritizes alerts based on severity  
+- NLP-powered description analysis  
+- Detects duplicate or spam submissions  
+- Image intelligence for authenticity checks  
+
+---
+
+### **🧭 Community-Based Verified Reporting**
+- Trusted user system  
+- Layered verification (Users → Moderators → NGOs → Authorities)  
+- Reduces false alarms dramatically  
+
+---
+
+### **📶 Offline Mode (SMS Alerts)**
+Even when internet fails:  
+- Users get SMS alerts  
+- Can report emergencies via text  
+
+---
+
+### **💬 AI Emergency Assistant**
+- Provides step-by-step emergency guidance  
+- Location-aware responses  
+- Multi-language support  
+
+---
+
+### **🛡️ Misinformation Prevention**
+- AI moderation + rule engine  
+- Cross-checks reports with **NDMA, IMD**, and verified local data  
+- Duplicate detection using NLP  
+- Image forensics to prevent reused images  
 
 ---
 
 ## ⚙️ Technology Stack
 
-| Category | Technologies |
-|-----------|---------------|
-| **Frontend** | Flutter (cross-platform) |
-| **Backend** | Node.js / Flask with REST APIs |
-| **Database** | MongoDB Atlas (NoSQL) |
-| **AI/ML** | TensorFlow, PyTorch, Hugging Face |
-| **Maps & Geolocation** | Google Maps API, Geofencing |
-| **Cloud Hosting** | AWS / Firebase / Google Cloud |
-| **Notifications** | Firebase Cloud Messaging, Twilio SMS |
-| **External APIs** | NDMA, IMD, regional fire department APIs |
+### **Frontend (Mobile App)**
+- Flutter (Cross-platform: Android + iOS)  
+- Google Maps SDK  
+- FCM Notifications  
+
+### **Backend Services**
+- Node.js / Flask microservices  
+- API Gateway  
+- Authentication service  
+- Incident reporting service  
+- AI analytics service  
+
+### **Database**
+- MongoDB Atlas (GeoJSON + NoSQL)  
+
+### **AI / ML**
+- TensorFlow  
+- PyTorch  
+- Hugging Face transformers  
+- Anomaly detection (fire/flood patterns)  
+- NLP moderation models  
+
+### **Cloud & Infrastructure**
+- AWS / Firebase / Google Cloud  
+- Docker containers  
+- Load-balanced microservices  
+
+### **External APIs**
+- NDMA alerts  
+- IMD weather + seismic APIs  
+- Local fire department integration  
 
 ---
 
-## 🧠 AI/ML Features
+## 🧠 AI/ML Capabilities
 
-### **Automated Detection**
-- Anomaly detection for suspicious reporting patterns.  
-- NLP classifiers to identify duplicate or generic text.  
-- Image forensics for verifying authenticity.  
-- Cross-validation with NDMA/IMD data feeds.  
-- Confidence scoring to route uncertain data for human review.
-
-### **Human-in-the-Loop Verification**
-- Moderation by trained volunteers and student emergency teams.  
-- Confirmation from nearby verified users.  
-- NGO and local authority partnerships for fast validation.
+### **Automated Detection Engine**
+- Identifies unusual reporting spikes  
+- Detects generic or bot-like text  
+- Flags duplicate or misleading reports  
+- Image verification using forensic models  
+- Confidence-based routing for human moderation  
 
 ---
 
-## 🧩 Flutter UI Implementation
+### **Human-in-the-Loop System**
+Aapda Setu uses multi-layer validation:
 
-This repository contains a **complete Flutter implementation** of the Figma UI design for Aapda Setu.
+1. **User Reports**
+2. **Nearby Verified Users**
+3. **Volunteer Moderators**
+4. **NGOs / Emergency Teams**
+5. **Authorities**
 
-### **UI Screens**
-1. **Splash Screen** – Animated branding (2.5s)  
-2. **Onboarding** – 3 slides with skip and next buttons  
-3. **Login** – OTP-based authentication  
-4. **Home** – Map view with real-time alerts  
-5. **Report** – 4-step incident reporting form  
-6. **Alerts** – List & map views with filters  
-7. **Chatbot** – AI emergency assistant  
-8. **Profile** – User preferences & account settings  
-9. **Moderator Dashboard** – Verification panel  
-10. **Bottom Navigation** – 5-tab structure
-
-### **Design Fidelity**
-- 🎨 Colors:  
-  - Primary: `#E53935` (Red)  
-  - Secondary: `#1565C0` (Blue)  
-  - Success: `#4CAF50` (Green)  
-- 🧱 Border Radius: 10px  
-- ✍️ Font: Google Fonts *Inter*  
-- 🌈 Shadows & Elevation: Material Design-based
+This ensures **accuracy, authenticity, and trust**.
 
 ---
 
-## 🧭 Project Structure
+## 📱 Flutter App Features
+
+### **Screens**
+- Splash & Onboarding  
+- OTP-based Login  
+- Real-time Map Alerts  
+- Report Incident (guided form)  
+- Alerts Dashboard  
+- AI Chatbot  
+- Moderator Review Panel  
+- Profile & Settings  
+- Bottom Navigation (5-tab)  
+
+---
+
+## 🎨 UI Specifications
+- Color Palette:  
+  - 🔴 Primary Red: `#E53935`  
+  - 🔵 Secondary Blue: `#1565C0`  
+  - 🟢 Success Green: `#4CAF50`  
+- Font: **Inter (Google Fonts)**  
+- Border Radius: 10px  
+- Material Design Shadows  
+
+---
+
+## 🧭 Project Structure (Flutter)
 
 ```
 lib/
@@ -105,148 +187,69 @@ lib/
 
 ---
 
-## 🧪 Testing the Onboarding Screen
+## 🧪 Testing Guide (Onboarding)
 
-By default, the onboarding screen appears only **once**.  
-To test it repeatedly, follow one of the options below.
-
-### ✅ Option 1: Force Show (Recommended)
-In `lib/main.dart`, change:
-```dart
-static const bool _forceShowOnboarding = false;
-```
-
-to
-
+### **Force Onboarding Always**
+In `main.dart`:
 ```dart
 static const bool _forceShowOnboarding = true;
 ```
 
-→ This shows onboarding every time you launch the app.
-⚠️ *Set it back to `false` before production!*
-
-### 🧹 Option 2: Clear App Data
-
-**Android Settings:**
-
+### **Clear App Data**
 ```
 Settings → Apps → Aapda Setu → Storage → Clear Data
 ```
 
-**ADB Command:**
-
+### **ADB Reset**
 ```bash
 adb shell pm clear com.example.aapda_setu_application
 ```
 
-### 🔁 Option 3: Reinstall the App
+### **Debug Button Method**
+(Temporary testing option)
 
-```bash
-flutter clean
-flutter run
+---
+
+## 🧰 Backend Microservices
+
 ```
-
-### 🧰 Option 4: Add Debug Button (Temporary)
-
-In `ProfileScreen`:
-
-```dart
-ElevatedButton(
-  onPressed: () async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('hasSeenOnboarding');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Onboarding reset! Restart the app.')),
-    );
-  },
-  child: Text('Reset Onboarding (Debug)'),
-),
-```
-
----
-
-## 🧾 Expected Behavior
-
-| Launch Type      | Flow                                     |
-| ---------------- | ---------------------------------------- |
-| **First Launch** | Splash → Onboarding → Login              |
-| **Next Launch**  | Splash → Login                           |
-| **Force Mode**   | Splash → Onboarding → Login (every time) |
-
----
-
-## ✅ Testing Checklist
-
-* [ ] Onboarding shows on first launch
-* [ ] All 3 slides work with Next/Skip buttons
-* [ ] Dot indicators and transitions work
-* [ ] Flag saves after completion
-* [ ] Skipped on next launch
-* [ ] Force flag works
-
----
-
-## 🧰 Development Setup
-
-### **Requirements**
-
-* Flutter SDK 3.9.2+
-* Android Studio or VS Code
-* Android Emulator or physical device
-
-### **Commands**
-
-```bash
-flutter pub get
-flutter run
-flutter build apk --release
+backend/
+├── ai-service/
+├── api-gateway/
+├── auth-service/
+├── report-service/
+└── notifications-service/
 ```
 
 ---
 
 ## 🧠 Future Enhancements
-
-* Integration with **IoT fire sensors** and **drones** for faster detection
-* **Predictive analytics** for early disaster forecasting
-* **Voice-based AI assistant** for accessibility
-* **Automated integration** with emergency services
+- IoT fire sensors  
+- Drone-based hazard detection  
+- Predictive analytics for early disaster warnings  
+- Voice-enabled emergency assistant  
+- Blockchain for report authenticity  
+- ML-driven risk scoring per region  
 
 ---
 
 ## ⚡ Advantages
-
-* Real-time, AI-prioritized alerts
-* Verified and trusted community data
-* Multi-language and offline SMS alerts
-* Collaboration between citizens and authorities
-* Scalable and secure backend design
-
----
-
-## 🧩 Backend Services (Existing)
-
-```
-backend/
-├── ai-service/         # Python AI service
-├── api-gateway/        # Node.js gateway
-├── auth-service/       # Node.js authentication
-└── report-service/     # Node.js reports
-```
+- AI-prioritized, real-time alerts  
+- Verified & high-trust crowd intelligence  
+- Government API integration  
+- Offline-ready design  
+- Scalable microservices backend  
+- Multi-language & accessible  
 
 ---
 
-## 🏁 Conclusion
-
-**Aapda Setu** transforms disaster management into an intelligent, community-driven, and transparent system.
-Through **AI**, **geofencing**, and **verified reporting**, it empowers citizens and authorities to act faster and smarter during emergencies.
-
----
-
-## 📜 License
-
-This project is part of the **Aapda Setu Disaster Management System**.
-All rights reserved © 2025.
+## 🏁 Conclusion  
+**Aapda Setu** transforms traditional disaster response by combining **AI**, **geolocation**, **community verification**, and **real-time communication**.  
+It is built to protect lives, speed up response, and strengthen emergency infrastructure across India.
 
 ---
 
-**Built with ❤️ using Flutter**
+## 📜 License  
+© 2025 — Aapda Setu Disaster Management System  
+All Rights Reserved.
+
