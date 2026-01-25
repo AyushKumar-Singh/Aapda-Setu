@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
 class ChatbotScreen extends StatefulWidget {
@@ -43,7 +44,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     super.dispose();
   }
 
-  void _handleSend([String? text]) {
+  void _handleSend([String? text]) async {
     final messageText = text ?? _messageController.text.trim();
     if (messageText.isEmpty) return;
 
@@ -57,20 +58,32 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     _scrollToBottom();
 
-    // Simulate bot response
-    Future.delayed(const Duration(seconds: 1), () {
+    // Call the real Gemini API
+    try {
+      final response = await ApiService().chatWithBot(messageText);
       setState(() {
         _messages.add(
           ChatMessage(
-            text: _getBotResponse(messageText),
+            text: response,
             isUser: false,
             timestamp: DateTime.now(),
           ),
         );
         _isTyping = false;
       });
-      _scrollToBottom();
-    });
+    } catch (e) {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: 'Sorry, I encountered an error. Emergency services: Police-100, Fire-101, Ambulance-102.',
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
+        _isTyping = false;
+      });
+    }
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
@@ -171,7 +184,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ),
         ],
       ),
-      body: Column(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Column(
         children: [
           // Suggested Prompts
           if (_messages.length == 1)
@@ -224,9 +239,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
 
-          // Input
+          // Input - with bottom margin to clear nav bar
           Container(
             color: Colors.white,
+            margin: const EdgeInsets.only(bottom: 80), // Space for bottom nav
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -278,6 +294,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

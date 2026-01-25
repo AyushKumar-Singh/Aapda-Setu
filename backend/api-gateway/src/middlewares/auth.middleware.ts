@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import admin from '../config/firebase';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -11,7 +10,7 @@ export interface AuthRequest extends Request {
 }
 
 /**
- * Middleware to verify JWT token (for web admin)
+ * Middleware to verify JWT token (for web admin and mobile)
  */
 export const verifyJWT = async (
     req: AuthRequest,
@@ -54,50 +53,8 @@ export const verifyJWT = async (
 };
 
 /**
- * Middleware to verify Firebase token (for mobile app)
- */
-export const verifyFirebaseToken = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            res.status(401).json({
-                success: false,
-                error: 'No token provided'
-            });
-            return;
-        }
-
-        const token = authHeader.substring(7);
-
-        try {
-            const decodedToken = await admin.auth().verifyIdToken(token);
-
-            req.user = {
-                userId: decodedToken.uid,
-                role: decodedToken.role || 'user',
-                tenantId: decodedToken.tenantId || 'default'
-            };
-
-            next();
-        } catch (error) {
-            res.status(401).json({
-                success: false,
-                error: 'Invalid Firebase token'
-            });
-            return;
-        }
-    } catch (error) {
-        next(error);
-    }
-};
-
-/**
- * Hybrid auth middleware - accepts both JWT and Firebase tokens
+ * JWT-only authentication middleware
+ * Used for both web admin dashboard and mobile app
  */
 export const authenticate = async (
     req: AuthRequest,
@@ -116,7 +73,6 @@ export const authenticate = async (
 
     const token = authHeader.substring(7);
 
-    // Try JWT first (for web admin)
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
         req.user = {
@@ -125,23 +81,12 @@ export const authenticate = async (
             tenantId: decoded.tenantId
         };
         return next();
-    } catch (jwtError) {
-        // If JWT fails, try Firebase token (for mobile)
-        try {
-            const decodedToken = await admin.auth().verifyIdToken(token);
-            req.user = {
-                userId: decodedToken.uid,
-                role: decodedToken.role || 'user',
-                tenantId: decodedToken.tenantId || 'default'
-            };
-            return next();
-        } catch (firebaseError) {
-            res.status(401).json({
-                success: false,
-                error: 'Invalid authentication token'
-            });
-            return;
-        }
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            error: 'Invalid authentication token'
+        });
+        return;
     }
 };
 

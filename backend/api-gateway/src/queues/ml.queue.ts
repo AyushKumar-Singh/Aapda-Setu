@@ -1,99 +1,145 @@
 import { Queue, Worker } from 'bullmq';
-import { getRedisClient } from '../config/redis';
 import axios from 'axios';
 
 const ML_CPU_URL = process.env.ML_CPU_URL || 'http://localhost:8000';
 const ML_GPU_URL = process.env.ML_GPU_URL || 'http://localhost:8001';
 
-// Create queues
-export const textAnalysisQueue = new Queue('text-analysis', {
-    connection: getRedisClient() as any
+// Lazy-initialized queues and workers
+let textAnalysisQueue: Queue;
+let imageAnalysisQueue: Queue;
+let fusionQueue: Queue;
+let textWorker: Worker;
+let imageWorker: Worker;
+let fusionWorker: Worker;
+let initialized = false;
+
+// Redis connection options for BullMQ
+const getRedisConnection = () => ({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || undefined
 });
 
-export const imageAnalysisQueue = new Queue('image-analysis', {
-    connection: getRedisClient() as any
-});
+// Initialize queues and workers (call after Redis is connected)
+export const initializeMLQueues = () => {
+    if (initialized) return;
 
-export const fusionQueue = new Queue('fusion-analysis', {
-    connection: getRedisClient() as any
-});
+    const connection = getRedisConnection();
 
-// Text Analysis Worker
-const textWorker = new Worker(
-    'text-analysis',
-    async (job) => {
-        const { report_id, text, metadata } = job.data;
+    // Create queues
+    textAnalysisQueue = new Queue('text-analysis', { connection });
+    imageAnalysisQueue = new Queue('image-analysis', { connection });
+    fusionQueue = new Queue('fusion-analysis', { connection });
 
-        try {
-            const response = await axios.post(`${ML_CPU_URL}/analyze/text`, {
-                text,
-                report_id,
-                metadata
-            });
+    // Text Analysis Worker
+    textWorker = new Worker(
+        'text-analysis',
+        async (job) => {
+            const { report_id, text, metadata } = job.data;
 
-            return response.data;
-        } catch (error: any) {
-            console.error('Text analysis failed:', error.message);
-            throw error;
-        }
-    },
-    { connection: getRedisClient() as any }
-);
+            try {
+                const response = await axios.post(`${ML_CPU_URL}/analyze/text`, {
+                    text,
+                    report_id,
+                    metadata
+                });
 
-// Image Analysis Worker
-const imageWorker = new Worker(
-    'image-analysis',
-    async (job) => {
-        const { report_id, image_url } = job.data;
+                return response.data;
+            } catch (error: any) {
+                console.error('Text analysis failed:', error.message);
+                throw error;
+            }
+        },
+        { connection }
+    );
 
-        try {
-            // Download image and send to ML service
-            const imageResponse = await axios.get(image_url, { responseType: 'arraybuffer' });
+    // Image Analysis Worker
+    imageWorker = new Worker(
+        'image-analysis',
+        async (job) => {
+            const { report_id, image_url } = job.data;
 
-            const formData = new FormData();
-            formData.append('file', new Blob([imageResponse.data]), 'image.jpg');
+            try {
+                // Download image and send to ML service
+                const imageResponse = await axios.get(image_url, { responseType: 'arraybuffer' });
 
-            const response = await axios.post(`${ML_GPU_URL}/analyze/image`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+                const formData = new FormData();
+                formData.append('file', new Blob([imageResponse.data]), 'image.jpg');
 
-            return response.data;
-        } catch (error: any) {
-            console.error('Image analysis failed:', error.message);
-            throw error;
-        }
-    },
-    { connection: getRedisClient() as any }
-);
+                const response = await axios.post(`${ML_GPU_URL}/analyze/image`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
 
-// Fusion Worker (combines text + image scores)
-const fusionWorker = new Worker(
-    'fusion-analysis',
-    async (job) => {
-        const { report_id, text_score, image_score, metadata_features } = job.data;
+                return response.data;
+            } catch (error: any) {
+                console.error('Image analysis failed:', error.message);
+                throw error;
+            }
+        },
+        { connection }
+    );
 
-        try {
-            const response = await axios.post(`${ML_CPU_URL}/analyze/fusion`, {
-                text_score,
-                image_score,
-                metadata_features
-            });
+    // Fusion Worker (combines text + image scores)
+    fusionWorker = new Worker(
+        'fusion-analysis',
+        async (job) => {
+            const { report_id, text_score, image_score, metadata_features } = job.data;
 
-            // Update report with final ML results
-            // TODO: Import Report model and update
-            console.log(`Fusion analysis complete for ${report_id}:`, response.data);
+            try {
+                const response = await axios.post(`${ML_CPU_URL}/analyze/fusion`, {
+                    text_score,
+                    image_score,
+                    metadata_features
+                });
 
-            return response.data;
-        } catch (error: any) {
-            console.error('Fusion analysis failed:', error.message);
-            throw error;
-        }
-    },
-    { connection: getRedisClient() as any }
-);
+                // Update report with final ML results
+                console.log(`Fusion analysis complete for ${report_id}:`, response.data);
+
+                return response.data;
+            } catch (error: any) {
+                console.error('Fusion analysis failed:', error.message);
+                throw error;
+            }
+        },
+        { connection }
+    );
+
+    // Event listeners for queue monitoring
+    textWorker.on('completed', (job) => {
+        console.log(`Text analysis completed: ${job.id}`);
+    });
+
+    imageWorker.on('completed', (job) => {
+        console.log(`Image analysis completed: ${job.id}`);
+    });
+
+    fusionWorker.on('completed', (job) => {
+        console.log(`Fusion analysis completed: ${job.id}`);
+    });
+
+    textWorker.on('failed', (job, err) => {
+        console.error(`Text analysis failed: ${job?.id}`, err.message);
+    });
+
+    imageWorker.on('failed', (job, err) => {
+        console.error(`Image analysis failed: ${job?.id}`, err.message);
+    });
+
+    fusionWorker.on('failed', (job, err) => {
+        console.error(`Fusion analysis failed: ${job?.id}`, err.message);
+    });
+
+    initialized = true;
+    console.log('✓ ML Queues initialized');
+};
 
 // Helper function to trigger ML pipeline
 export const triggerMLPipeline = async (reportId: string, text: string, imageUrls: string[]) => {
+    if (!initialized) {
+        console.warn('ML queues not initialized, skipping pipeline');
+        return;
+    }
+
     try {
         // Queue text analysis
         const textJob = await textAnalysisQueue.add('analyze', {
@@ -133,27 +179,7 @@ export const triggerMLPipeline = async (reportId: string, text: string, imageUrl
     }
 };
 
-// Event listeners for queue monitoring
-textWorker.on('completed', (job) => {
-    console.log(`Text analysis completed: ${job.id}`);
-});
-
-imageWorker.on('completed', (job) => {
-    console.log(`Image analysis completed: ${job.id}`);
-});
-
-fusionWorker.on('completed', (job) => {
-    console.log(`Fusion analysis completed: ${job.id}`);
-});
-
-textWorker.on('failed', (job, err) => {
-    console.error(`Text analysis failed: ${job?.id}`, err.message);
-});
-
-imageWorker.on('failed', (job, err) => {
-    console.error(`Image analysis failed: ${job?.id}`, err.message);
-});
-
-fusionWorker.on('failed', (job, err) => {
-    console.error(`Fusion analysis failed: ${job?.id}`, err.message);
-});
+// Export getters for queues (for external use)
+export const getTextAnalysisQueue = () => textAnalysisQueue;
+export const getImageAnalysisQueue = () => imageAnalysisQueue;
+export const getFusionQueue = () => fusionQueue;

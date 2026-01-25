@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
 import '../models/alert_model.dart';
 
@@ -177,52 +179,102 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Map View
+          // Map View with OpenStreetMap
           SliverToBoxAdapter(
             child: Container(
               height: 320,
               margin: const EdgeInsets.only(bottom: 1),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.blue.shade50, Colors.green.shade50],
-                ),
-                border: const Border(
+              decoration: const BoxDecoration(
+                border: Border(
                   bottom: BorderSide(color: AppTheme.border),
                 ),
               ),
               child: Stack(
                 children: [
-                  // Map Placeholder
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.navigation,
-                          size: 64,
-                          color: AppTheme.secondary,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Interactive Map View',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppTheme.mutedForeground),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${recentAlerts.length} alerts within ${_radius.toInt()} km',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
+                  // Real OpenStreetMap
+                  FlutterMap(
+                    options: MapOptions(
+                      initialCenter: const LatLng(28.6139, 77.2090), // Delhi
+                      initialZoom: 12.0,
                     ),
+                    children: [
+                      // OpenStreetMap Tiles
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.aapdaSetu.app',
+                      ),
+                      // Alert Markers
+                      MarkerLayer(
+                        markers: [
+                          // Fire Alert - Dwarka
+                          Marker(
+                            point: const LatLng(28.5921, 77.0460),
+                            width: 40,
+                            height: 40,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.destructive,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.destructive.withOpacity(0.5),
+                                    blurRadius: 10,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(Icons.local_fire_department, color: Colors.white, size: 20),
+                            ),
+                          ),
+                          // Flood Alert - Nehru Place
+                          Marker(
+                            point: const LatLng(28.5494, 77.2516),
+                            width: 36,
+                            height: 36,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: AppTheme.warning,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.water, color: Colors.white, size: 18),
+                            ),
+                          ),
+                          // Earthquake Alert - NCR
+                          Marker(
+                            point: const LatLng(28.6304, 77.2177),
+                            width: 32,
+                            height: 32,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: AppTheme.secondary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.terrain, color: Colors.white, size: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // User Location Marker
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: const LatLng(28.6139, 77.2090),
+                            width: 24,
+                            height: 24,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
 
-                  // Simulated Map Pins
-                  ..._buildMapPins(),
-
-                  // Radius Selector
+                  // Radius Selector Overlay
                   Positioned(
                     bottom: 16,
                     left: 16,
@@ -230,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(

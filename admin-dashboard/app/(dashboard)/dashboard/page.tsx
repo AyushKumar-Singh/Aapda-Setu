@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import apiClient from '@/lib/api/client';
 
@@ -8,7 +7,7 @@ const fetcher = (url: string) => apiClient.get(url).then(res => res.data.data);
 
 export default function DashboardPage() {
     const { data: stats, error, isLoading } = useSWR('/api/v1/admin/analytics', fetcher, {
-        refreshInterval: 30000 // Refresh every 30 seconds
+        refreshInterval: 30000
     });
 
     if (isLoading) {
@@ -30,7 +29,7 @@ export default function DashboardPage() {
         return (
             <div className="p-8">
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200">
-                    Failed to load dashboard data
+                    Failed to load dashboard data - Please ensure backend is running on port 5000
                 </div>
             </div>
         );
@@ -86,11 +85,11 @@ export default function DashboardPage() {
                         Quick Actions
                     </h3>
                     <div className="space-y-2">
-                        <a href="/dashboard/verification" className="block p-3 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                        <a href="/verification" className="block p-3 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition">
                             <div className="font-medium text-gray-900 dark:text-white">Review Pending Reports</div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">{stats?.pending_verification || 0} waiting</div>
                         </a>
-                        <a href="/dashboard/alerts" className="block p-3 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                        <a href="/alerts" className="block p-3 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition">
                             <div className="font-medium text-gray-900 dark:text-white">Create New Alert</div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">Broadcast emergency notification</div>
                         </a>
@@ -101,8 +100,8 @@ export default function DashboardPage() {
     );
 }
 
-function StatCard({ title, value, icon, color }: any) {
-    const colors = {
+function StatCard({ title, value, icon, color }: { title: string; value: number; icon: string; color: string }) {
+    const colors: Record<string, string> = {
         blue: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
         yellow: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
         red: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',

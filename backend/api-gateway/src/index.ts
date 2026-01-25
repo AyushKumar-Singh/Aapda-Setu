@@ -11,10 +11,11 @@ import { alertsRouter } from './routes/alerts.routes';
 import { usersRouter } from './routes/users.routes';
 import { analyticsRouter } from './routes/analytics.routes';
 import { mediaRouter } from './routes/media.routes';
+import { chatbotRouter } from './routes/chatbot.routes';
 import { errorHandler } from './middlewares/error.middleware';
 
-// Import ML queue to initialize workers
-import './queues/ml.queue';
+// Import ML queue initializer
+import { initializeMLQueues } from './queues/ml.queue';
 
 // Load environment variables
 dotenv.config();
@@ -57,6 +58,7 @@ app.use('/api/v1/alerts', alertsRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/admin', analyticsRouter);
 app.use('/api/v1/media', mediaRouter);
+app.use('/api/v1/chatbot', chatbotRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
@@ -79,6 +81,9 @@ const startServer = async () => {
         // Connect to Redis
         await connectRedis();
         console.log('✓ Redis connected');
+
+        // Initialize ML queues after Redis is ready
+        initializeMLQueues();
 
         // Start Express server
         app.listen(PORT, () => {

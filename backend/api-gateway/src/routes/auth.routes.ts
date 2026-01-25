@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.model';
-import admin from '../config/firebase';
 import { AppError } from '../middlewares/error.middleware';
 import { AuthRequest, authenticate } from '../middlewares/auth.middleware';
 
@@ -70,35 +69,44 @@ router.post('/admin/login', async (req: Request, res: Response) => {
 
 /**
  * POST /api/v1/auth/mobile/verify
- * Verify Firebase OTP token and create/update user
+ * Phone-based mobile authentication (dev mode)
+ * Creates/finds user by phone number and returns JWT token
  */
 router.post('/mobile/verify', async (req: Request, res: Response) => {
     try {
-        const { firebase_token } = req.body;
+        const { phone, name } = req.body;
 
-        if (!firebase_token) {
-            throw new AppError('Firebase token required', 400);
+        if (!phone) {
+            throw new AppError('Phone number required', 400);
         }
 
-        // Verify Firebase token
-        const decodedToken = await admin.auth().verifyIdToken(firebase_token);
-
-        // Find or create user
-        let user = await User.findOne({ firebase_uid: decodedToken.uid });
+        // Find or create user by phone number
+        let user = await User.findOne({ phone: phone });
 
         if (!user) {
             // Create new user
             user = await User.create({
                 user_id: `usr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                tenant_id: 'default', // TODO: Handle multi-tenancy
-                firebase_uid: decodedToken.uid,
-                name: decodedToken.name || 'User',
-                phone: decodedToken.phone_number || '',
-                email: decodedToken.email,
+                tenant_id: 'default',
+                name: name || 'Mobile User',
+                phone: phone,
                 role: 'user',
                 status: 'active'
             });
         }
+
+        // Generate JWT token for the mobile user
+        const accessToken = jwt.sign(
+            {
+                userId: user.user_id,
+                role: user.role,
+                tenantId: user.tenant_id
+            },
+            process.env.JWT_SECRET!,
+            {
+                expiresIn: '30d' // Longer expiry for mobile
+            }
+        );
 
         // Update last login
         await User.findByIdAndUpdate(user._id, { last_login: new Date() });
@@ -106,6 +114,8 @@ router.post('/mobile/verify', async (req: Request, res: Response) => {
         res.json({
             success: true,
             data: {
+                access_token: accessToken,
+                expires_in: 2592000, // 30 days in seconds
                 user: {
                     user_id: user.user_id,
                     name: user.name,
@@ -117,7 +127,7 @@ router.post('/mobile/verify', async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        throw new AppError('Invalid Firebase token', 401);
+        throw error;
     }
 });
 

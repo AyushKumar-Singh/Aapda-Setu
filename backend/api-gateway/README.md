@@ -9,7 +9,7 @@ All protected endpoints require Bearer token in Authorization header:
 Authorization: Bearer <token>
 ```
 
-Supports both JWT (web admin) and Firebase tokens (mobile app).
+Uses JWT tokens for both web admin dashboard and mobile app.
 
 ## Endpoints
 
@@ -37,13 +37,24 @@ Response:
 }
 ```
 
-#### Mobile OTP Verify (Firebase)
+#### Mobile Phone Verify (Dev Mode)
 ```
 POST /auth/mobile/verify
 Content-Type: application/json
 
 {
-  "firebase_token": "firebase_id_token"
+  "phone": "+911234567890",
+  "name": "User Name"  // optional
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "access_token": "jwt_token",
+    "expires_in": 2592000,
+    "user": { "user_id": "...", "name": "...", "phone": "...", "role": "user" }
+  }
 }
 ```
 

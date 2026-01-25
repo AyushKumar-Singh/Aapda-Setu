@@ -8,7 +8,7 @@ const fetcher = (url: string) => apiClient.get(url).then(res => res.data.data);
 
 export default function AlertsPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const { data: alerts, mutate } = useSWR('/api/v1/alerts?limit=50', fetcher, {
+    const { data: alerts, mutate, isLoading } = useSWR('/api/v1/alerts?limit=50', fetcher, {
         refreshInterval: 30000
     });
 
@@ -38,6 +38,21 @@ export default function AlertsPage() {
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="p-8 max-w-7xl mx-auto">
+                <div className="animate-pulse space-y-4">
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
@@ -55,8 +70,8 @@ export default function AlertsPage() {
                     <div key={alert._id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                         <div className="flex justify-between items-start mb-3">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${alert.status === 'active' ? 'bg-red-100 text-red-800' :
-                                    alert.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                                        'bg-gray-100 text-gray-800'
+                                alert.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
                                 }`}>
                                 {alert.status}
                             </span>

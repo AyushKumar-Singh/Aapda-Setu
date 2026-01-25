@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IUser extends Document {
     user_id: string;
     tenant_id: string;
-    firebase_uid: string;
+    firebase_uid?: string; // Optional - legacy field
     name: string;
     phone: string;
     email?: string;
@@ -35,8 +35,7 @@ const userSchema = new Schema<IUser>({
     },
     firebase_uid: {
         type: String,
-        required: true,
-        unique: true,
+        sparse: true, // Optional field with sparse index
         index: true
     },
     name: {

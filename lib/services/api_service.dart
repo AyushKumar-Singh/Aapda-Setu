@@ -7,8 +7,8 @@ class ApiService {
   ApiService._internal();
 
   late Dio _dio;
-  static const String baseUrl = 'http://10.0.2.2:3000'; // Android emulator localhost
-  // For physical device, use your computer's IP: 'http://192.168.x.x:3000'
+  static const String baseUrl = 'http://10.0.2.2:5000'; // Android emulator localhost
+  // For physical device, use your computer's IP: 'http://192.168.x.x:5000'
 
   Future<void> init() async {
     _dio = Dio(BaseOptions(
@@ -24,7 +24,7 @@ class ApiService {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('firebase_token');
+        final token = prefs.getString('auth_token');
         
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
@@ -44,18 +44,27 @@ class ApiService {
 
   void _handleUnauthorized() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('firebase_token');
+    await prefs.remove('auth_token');
     await prefs.remove('user_data');
     // Navigate to login - implement in your app
   }
 
   // AUTH ENDPOINTS
   
-  Future<Map<String, dynamic>> verifyFirebaseToken(String firebaseToken) async {
+  /// Verify phone number and get JWT token (dev mode)
+  Future<Map<String, dynamic>> verifyPhone(String phone, {String? name}) async {
     try {
       final response = await _dio.post('/api/v1/auth/mobile/verify', data: {
-        'firebase_token': firebaseToken,
+        'phone': phone,
+        'name': name,
       });
+      
+      // Store the JWT token for future requests
+      if (response.data['success'] == true && response.data['data']['access_token'] != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', response.data['data']['access_token']);
+      }
+      
       return response.data;
     } catch (e) {
       throw _handleError(e);
@@ -175,10 +184,13 @@ class ApiService {
 
   Future<String> chatWithBot(String message) async {
     try {
-      final response = await _dio.post('http://localhost:8001/chat', data: {
+      final response = await _dio.post('/api/v1/chatbot/chat', data: {
         'message': message,
       });
-      return response.data['response'];
+      if (response.data['success'] == true) {
+        return response.data['data']['response'];
+      }
+      return response.data['fallback'] ?? 'Emergency services: Fire-101, Ambulance-102, Police-100. Stay safe!';
     } catch (e) {
       return 'Emergency services: Fire-101, Ambulance-102, Police-100. Stay safe!';
     }

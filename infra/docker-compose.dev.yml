@@ -1,0 +1,44 @@
+# Development overrides for docker-compose
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      target: base
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../backend/api-gateway:/app
+      - /app/node_modules
+
+  ml-cpu:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ../backend/ml-service-cpu:/app
+
+  ml-gpu:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    volumes:
+      - ../backend/ml-service-gpu:/app
+
+  ai-service:
+    command: python app.py
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      - ../backend/ai-service:/app
+
+  admin-dashboard:
+    build:
+      target: deps
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../admin-dashboard:/app
+      - /app/node_modules
+      - /app/.next
