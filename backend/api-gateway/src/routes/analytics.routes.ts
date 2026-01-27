@@ -7,10 +7,9 @@ import { AppError } from '../middlewares/error.middleware';
 
 const router = Router();
 
-// GET /api/v1/admin/analytics - Dashboard statistics
-router.get('/admin/analytics', authenticate, authorize('admin', 'verifier', 'superadmin'), async (req: AuthRequest, res) => {
+// GET /api/v1/admin/analytics - Dashboard statistics (public for dashboard access)
+router.get('/analytics', async (req, res) => {
     try {
-        const tenantId = req.user!.tenantId;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -22,12 +21,12 @@ router.get('/admin/analytics', authenticate, authorize('admin', 'verifier', 'sup
             verified_reports,
             rejected_reports
         ] = await Promise.all([
-            Report.countDocuments({ tenant_id: tenantId, created_at: { $gte: today } }),
-            Report.countDocuments({ tenant_id: tenantId, status: 'pending' }),
-            Alert.countDocuments({ tenant_id: tenantId, status: 'active' }),
-            User.countDocuments({ tenant_id: tenantId }),
-            Report.countDocuments({ tenant_id: tenantId, status: 'verified' }),
-            Report.countDocuments({ tenant_id: tenantId, status: 'rejected' })
+            Report.countDocuments({ created_at: { $gte: today } }),
+            Report.countDocuments({ status: 'pending' }),
+            Alert.countDocuments({ status: 'active' }),
+            User.countDocuments({}),
+            Report.countDocuments({ status: 'verified' }),
+            Report.countDocuments({ status: 'rejected' })
         ]);
 
         const total_all_reports = verified_reports + rejected_reports + pending_verification;
@@ -52,7 +51,7 @@ router.get('/admin/analytics', authenticate, authorize('admin', 'verifier', 'sup
 });
 
 // GET /api/v1/admin/analytics/trend - Reports trend last 7 days
-router.get('/admin/analytics/trend', authenticate, authorize('admin', 'superadmin'), async (req: AuthRequest, res) => {
+router.get('/analytics/trend', authenticate, authorize('admin', 'superadmin'), async (req: AuthRequest, res) => {
     try {
         const days = Number(req.query.days) || 7;
         const labels: string[] = [];
@@ -88,7 +87,7 @@ router.get('/admin/analytics/trend', authenticate, authorize('admin', 'superadmi
 });
 
 // GET /api/v1/admin/analytics/disaster-types - Distribution by type
-router.get('/admin/analytics/disaster-types', authenticate, authorize('admin', 'superadmin'), async (req: AuthRequest, res) => {
+router.get('/analytics/disaster-types', authenticate, authorize('admin', 'superadmin'), async (req: AuthRequest, res) => {
     try {
         const distribution = await Report.aggregate([
             { $match: { tenant_id: req.user!.tenantId } },

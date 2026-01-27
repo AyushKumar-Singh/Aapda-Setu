@@ -1,45 +1,58 @@
 import { createClient, RedisClientType } from 'redis';
 
-let redisClient: RedisClientType;
+let redisClient: RedisClientType | null = null;
+let redisAvailable = false;
 
-export const connectRedis = async (): Promise<RedisClientType> => {
+export const connectRedis = async (): Promise<RedisClientType | null> => {
     try {
-        redisClient = createClient({
+        const client = createClient({
             socket: {
                 host: process.env.REDIS_HOST || 'localhost',
-                port: parseInt(process.env.REDIS_PORT || '6379')
+                port: parseInt(process.env.REDIS_PORT || '6379'),
+                connectTimeout: 5000,
+                reconnectStrategy: (retries) => {
+                    if (retries > 3) {
+                        console.warn('⚠ Redis not available, continuing without caching');
+                        return false; // Stop reconnecting
+                    }
+                    return Math.min(retries * 100, 1000);
+                }
             },
             password: process.env.REDIS_PASSWORD || undefined
         });
 
-        redisClient.on('error', (error) => {
-            console.error('Redis error:', error);
+        client.on('error', (error) => {
+            if (redisAvailable) {
+                console.error('Redis error:', error);
+            }
         });
 
-        redisClient.on('connect', () => {
+        client.on('connect', () => {
             console.log('Redis client connected');
+            redisAvailable = true;
         });
 
-        redisClient.on('reconnecting', () => {
-            console.log('Redis client reconnecting');
-        });
-
-        redisClient.on('ready', () => {
+        client.on('ready', () => {
             console.log('Redis client ready');
+            redisAvailable = true;
         });
 
-        await redisClient.connect();
+        await client.connect();
+        redisClient = client;
+        redisAvailable = true;
 
         return redisClient;
     } catch (error) {
-        console.error('Failed to connect to Redis:', error);
-        throw error;
+        console.warn('⚠ Redis not available, continuing without caching');
+        redisAvailable = false;
+        return null;
     }
 };
 
-export const getRedisClient = (): RedisClientType => {
-    if (!redisClient) {
-        throw new Error('Redis client not initialized');
-    }
+export const getRedisClient = (): RedisClientType | null => {
     return redisClient;
+};
+
+export const isRedisAvailable = (): boolean => {
+    return redisAvailable && redisClient !== null;
 };

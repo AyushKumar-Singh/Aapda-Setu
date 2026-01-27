@@ -78,12 +78,15 @@ const startServer = async () => {
         await connectDatabase();
         console.log('✓ MongoDB connected');
 
-        // Connect to Redis
-        await connectRedis();
-        console.log('✓ Redis connected');
-
-        // Initialize ML queues after Redis is ready
-        initializeMLQueues();
+        // Connect to Redis (optional - server will work without it)
+        const redisConnected = await connectRedis();
+        if (redisConnected) {
+            console.log('✓ Redis connected');
+            // Initialize ML queues after Redis is ready
+            initializeMLQueues();
+        } else {
+            console.log('⚠ Running without Redis (caching disabled)');
+        }
 
         // Start Express server
         app.listen(PORT, () => {
