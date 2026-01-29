@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
+import 'pick_location_screen.dart';
 
 class ReportScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -17,6 +20,11 @@ class _ReportScreenState extends State<ReportScreen> {
   int _peopleAffected = 5;
   bool _submitting = false;
   bool _submitted = false;
+  
+  // Location state
+  double? _selectedLat;
+  double? _selectedLng;
+  String _selectedAddress = 'Tap to select location on map';
 
   final List<DisasterType> _disasterTypes = [
     DisasterType('fire', '🔥', 'Fire'),
@@ -46,21 +54,37 @@ class _ReportScreenState extends State<ReportScreen> {
       _showSnackBar('Please provide a description', isError: true);
       return;
     }
+    if (_selectedLat == null || _selectedLng == null) {
+      _showSnackBar('Please select a location on the map', isError: true);
+      return;
+    }
 
     setState(() => _submitting = true);
 
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 1500));
+    try {
+      // Submit to backend API
+      await ApiService().submitReport(
+        type: _disasterType,
+        description: _description,
+        peopleAffected: _peopleAffected,
+        lat: _selectedLat!,
+        lng: _selectedLng!,
+        address: _selectedAddress,
+      );
 
-    setState(() {
-      _submitting = false;
-      _submitted = true;
-    });
+      setState(() {
+        _submitting = false;
+        _submitted = true;
+      });
 
-    _showSnackBar('Report submitted for verification');
+      _showSnackBar('Report submitted for verification');
 
-    await Future.delayed(const Duration(seconds: 2));
-    widget.onBack();
+      await Future.delayed(const Duration(seconds: 2));
+      widget.onBack();
+    } catch (e) {
+      setState(() => _submitting = false);
+      _showSnackBar('Failed to submit report: $e', isError: true);
+    }
   }
 
   void _handleContinue() {
@@ -393,56 +417,96 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  Future<void> _openLocationPicker() async {
+    final LatLng? result = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(
+        builder: (context) => PickLocationScreen(
+          initialLocation: _selectedLat != null && _selectedLng != null
+              ? LatLng(_selectedLat!, _selectedLng!)
+              : null,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedLat = result.latitude;
+        _selectedLng = result.longitude;
+        _selectedAddress = 'Lat: ${result.latitude.toStringAsFixed(4)}, Lng: ${result.longitude.toStringAsFixed(4)}';
+      });
+    }
+  }
+
   Widget _buildStep3() {
+    final bool hasLocation = _selectedLat != null && _selectedLng != null;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Location', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         Text(
-          'Confirm the incident location',
+          'Select the incident location on the map',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 24),
-        Container(
-          height: 192,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.blue.shade50, Colors.green.shade50],
+        
+        // Tappable location picker card
+        InkWell(
+          onTap: _openLocationPicker,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            height: 192,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: hasLocation 
+                    ? [AppTheme.success.withOpacity(0.1), AppTheme.primary.withOpacity(0.1)]
+                    : [Colors.blue.shade50, Colors.green.shade50],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: hasLocation ? AppTheme.success : AppTheme.border,
+                width: hasLocation ? 2 : 1,
+              ),
             ),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.border),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.location_on,
-                  size: 48,
-                  color: AppTheme.secondary,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Current Location Detected',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Sector 15, Dwarka, New Delhi',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    hasLocation ? Icons.check_circle : Icons.add_location_alt,
+                    size: 48,
+                    color: hasLocation ? AppTheme.success : AppTheme.secondary,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    hasLocation ? 'Location Selected' : 'Tap to Select Location',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: hasLocation ? AppTheme.success : null,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      _selectedAddress,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.edit_location, size: 16),
-          label: const Text('Edit Location'),
+          onPressed: _openLocationPicker,
+          icon: const Icon(Icons.map, size: 16),
+          label: Text(hasLocation ? 'Change Location' : 'Open Map'),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 48),
           ),
@@ -526,7 +590,9 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
               const SizedBox(height: 12),
               _buildSummaryRow('Type', _getDisasterLabel()),
-              _buildSummaryRow('Location', 'Sector 15, Dwarka'),
+              _buildSummaryRow('Location', _selectedLat != null && _selectedLng != null 
+                  ? 'Lat: ${_selectedLat!.toStringAsFixed(4)}, Lng: ${_selectedLng!.toStringAsFixed(4)}'
+                  : 'Not selected'),
               _buildSummaryRow('People Affected', '$_peopleAffected'),
             ],
           ),

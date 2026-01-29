@@ -6,9 +6,110 @@ import { AppError } from '../middlewares/error.middleware';
 const router = Router();
 
 /**
+ * GET /api/v1/reports/public
+ * List all reports for mobile app map display
+ * No authentication required for hackathon demo
+ */
+router.get('/public', async (req: Request, res: Response) => {
+    try {
+        const {
+            status,
+            type,
+            limit = 50,
+            sort = '-created_at'
+        } = req.query;
+
+        const filter: any = {};
+
+        // For public endpoint, show verified and pending reports
+        if (status) {
+            filter.status = status;
+        } else {
+            filter.status = { $in: ['verified', 'pending'] };
+        }
+
+        if (type) filter.type = type;
+
+        const reports = await Report.find(filter)
+            .sort(sort as string)
+            .limit(Number(limit))
+            .lean();
+
+        res.json({
+            success: true,
+            data: {
+                items: reports,
+                total: reports.length
+            }
+        });
+    } catch (error) {
+        throw new AppError('Failed to fetch public reports', 500);
+    }
+});
+
+/**
+ * POST /api/v1/reports/public
+ * Create new report from mobile app
+ * Simplified payload without authentication for hackathon demo
+ */
+router.post('/public', async (req: Request, res: Response) => {
+    try {
+        const { type, description, peopleAffected, lat, lng, address, mediaUrl } = req.body;
+
+        // Validate required fields
+        if (!type || !description || lat === undefined || lng === undefined) {
+            throw new AppError('Missing required fields: type, description, lat, lng', 400);
+        }
+
+        const reportData = {
+            report_id: `rpt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            tenant_id: 'public', // Public tenant for mobile app
+            user_id: 'anonymous', // Anonymous user for hackathon
+            type,
+            severity: 'medium', // Default severity
+            title: `${type.charAt(0).toUpperCase() + type.slice(1)} Incident Report`,
+            description,
+            location: {
+                type: 'Point',
+                coordinates: [lng, lat] // GeoJSON format: [longitude, latitude]
+            },
+            address: {
+                formatted: address || `Lat: ${lat}, Lng: ${lng}`,
+                city: '',
+                state: ''
+            },
+            media: mediaUrl ? [{
+                media_id: `media_${Date.now()}`,
+                type: 'image',
+                url: mediaUrl
+            }] : [],
+            status: 'pending',
+            confidence_score: 0,
+            nearby_confirmations: 0,
+            is_anonymous: true,
+            peopleAffected: peopleAffected || 0
+        };
+
+        const report = await Report.create(reportData);
+
+        console.log(`[Reports] Created public report: ${report.report_id}`);
+
+        res.status(201).json({
+            success: true,
+            data: report
+        });
+    } catch (error: any) {
+        console.error('[Reports] Failed to create public report:', error);
+        console.error('[Reports] Error details:', error?.message, error?.code, error?.keyPattern);
+        throw new AppError('Failed to create report', 500);
+    }
+});
+
+/**
  * GET /api/v1/reports
  * List reports with filters (public + authenticated)
  */
+
 router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         const {

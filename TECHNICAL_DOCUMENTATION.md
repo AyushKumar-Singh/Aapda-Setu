@@ -20,10 +20,10 @@
 
 ## 🗺️ Mapping & Location APIs
 
-### MapLibre + OpenStreetMap Tiles
+### flutter_map + OpenStreetMap Tiles
 - **Why not Google Maps?** — Google Maps charges per API call; OSM is free and open-source
 - **Implementation:**
-  - MapLibre GL renders interactive disaster maps
+  - flutter_map (v8.2.2) renders interactive disaster maps
   - Markers show verified incidents with severity colors
   - Geofencing circles drawn for alert radius visualization
 
@@ -75,15 +75,15 @@ IMD/NDMA API → Scheduler fetches every 10 min → AI categorizes severity → 
 
 ## 🔔 Notification APIs
 
-### Firebase Cloud Messaging (FCM)
+### Firebase Cloud Messaging (FCM) [PLANNED]
 - **Use:** Real-time push notifications to mobile app
 - **Targeting:** Topic-based (by city/district) or device-specific
-- **Endpoint:** Internal `services/fcm.service.ts`
+- **Status:** Planned for future implementation
 
-### Twilio SMS (Offline Backup)
+### Twilio SMS (Offline Backup) [PLANNED]
 - **Use:** Reaches users with no internet
 - **Trigger:** High-severity alerts only
-- **Endpoint:** Internal via `.env` credentials
+- **Status:** Planned for future implementation
 
 ---
 
@@ -94,7 +94,12 @@ IMD/NDMA API → Scheduler fetches every 10 min → AI categorizes severity → 
 | **Text Classification** | 8000 | DistilBERT disaster type detection |
 | **Image Forensics** | 8001 | EfficientNet scene verification |
 | **Fusion Model** | 8000 | LightGBM combining text + image scores |
-| **Gemini Chatbot** | 5000 | Emergency guidance via Google AI |
+| **Ollama Chatbot** | 5000 (API) / 11434 (Ollama) | Emergency guidance via local LLM |
+
+### Chatbot Details
+- Uses **Ollama** with custom `aapda-assistant` model
+- NDMA safety wrapper prepended to all prompts
+- Fallback message with emergency numbers if AI unavailable
 
 ### Security
 - All internal ML calls use **HMAC signatures**
@@ -234,12 +239,12 @@ db.users.find({
 |---------|--------|----------|
 | Report submission API | ✅ Done | `routes/reports.routes.ts` |
 | MongoDB GeoJSON storage | ✅ Done | `models/Report.model.ts` |
-| MapLibre live map UI | ✅ Done | `admin-dashboard/` |
+| flutter_map live map UI | ✅ Done | Flutter app + `admin-dashboard/` |
 | Redis queue pipeline | ✅ Done | `queues/ml.queue.ts` |
 | ML text classification | ✅ Stub | `ml-service-cpu/` |
-| FCM push notifications | ✅ Demo | `services/fcm.service.ts` |
+| FCM push notifications | 🔮 Planned | TODO in `alerts.routes.ts` |
 | 5 km geofence query | ✅ Done | MongoDB 2dsphere index |
-| Gemini AI Chatbot | ✅ Done | `routes/chatbot.routes.ts` |
+| Ollama AI Chatbot | ✅ Done | `routes/chatbot.routes.ts` |
 | JWT + Phone Auth | ✅ Done | `routes/auth.routes.ts` |
 
 ## 🔮 Planned Next (Startup Scale)

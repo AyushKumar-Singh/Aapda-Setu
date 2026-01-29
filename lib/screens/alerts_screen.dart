@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
 import '../models/alert_model.dart';
+import '../services/api_service.dart';
 
 class AlertsScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -16,57 +19,39 @@ class _AlertsScreenState extends State<AlertsScreen> {
   double _filterDistance = 10.0;
   String? _filterType;
   String? _filterSeverity;
+  
+  // Dynamic data loading
+  List<AlertModel> _alerts = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  final List<AlertModel> alerts = [
-    AlertModel(
-      id: 1,
-      type: 'fire',
-      title: 'Major Fire in Commercial Building',
-      location: 'Connaught Place, Central Delhi',
-      distance: 1.2,
-      time: '15 mins ago',
-      verified: true,
-      severity: 'high',
-      peopleAffected: 25,
-      hasMedia: true,
-    ),
-    AlertModel(
-      id: 2,
-      type: 'flood',
-      title: 'Heavy Water Logging',
-      location: 'Ring Road, Nehru Place',
-      distance: 3.8,
-      time: '1 hour ago',
-      verified: true,
-      severity: 'medium',
-      peopleAffected: 50,
-      hasMedia: true,
-    ),
-    AlertModel(
-      id: 3,
-      type: 'accident',
-      title: 'Multi-Vehicle Collision',
-      location: 'NH-8, Gurgaon Border',
-      distance: 6.5,
-      time: '2 hours ago',
-      verified: true,
-      severity: 'high',
-      peopleAffected: 8,
-      hasMedia: false,
-    ),
-    AlertModel(
-      id: 4,
-      type: 'earthquake',
-      title: 'Tremors Detected',
-      location: 'Delhi NCR Region',
-      distance: 8.2,
-      time: '3 hours ago',
-      verified: false,
-      severity: 'low',
-      peopleAffected: 0,
-      hasMedia: false,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchAlerts();
+  }
+
+  Future<void> _fetchAlerts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final reports = await ApiService().getPublicReports();
+      setState(() {
+        _alerts = reports.map((json) => AlertModel.fromJson(json)).toList();
+        _isLoading = false;
+      });
+      print('[AlertsScreen] Loaded ${_alerts.length} alerts from API');
+    } catch (e) {
+      print('[AlertsScreen] Error fetching alerts: $e');
+      setState(() {
+        _errorMessage = 'Failed to load alerts';
+        _isLoading = false;
+      });
+    }
+  }
 
   IconData _getDisasterIcon(String type) {
     switch (type) {
@@ -97,8 +82,9 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   List<AlertModel> get _filteredAlerts {
-    return alerts.where((alert) {
-      if (alert.distance > _filterDistance) return false;
+    return _alerts.where((alert) {
+      // Distance filter disabled for now since we don't calculate real distance
+      // if (alert.distance > _filterDistance) return false;
       if (_filterType != null && alert.type != _filterType) return false;
       if (_filterSeverity != null && alert.severity != _filterSeverity) {
         return false;
@@ -116,6 +102,92 @@ class _AlertsScreenState extends State<AlertsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => _buildFilterSheet(),
+    );
+  }
+
+  void _showAlertDetails(AlertModel alert) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _getSeverityColor(alert.severity),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _getDisasterIcon(alert.type),
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        alert.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (alert.time != null)
+                        Text(
+                          alert.time!,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Location: ${alert.location}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            if (alert.latitude != null && alert.longitude != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Coordinates: ${alert.latitude!.toStringAsFixed(4)}, ${alert.longitude!.toStringAsFixed(4)}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            if (alert.peopleAffected != null && alert.peopleAffected! > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '👥 ${alert.peopleAffected} people affected',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -217,70 +289,238 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 
   Widget _buildListView(List<AlertModel> filteredAlerts) {
-    if (filteredAlerts.isEmpty) {
+    // Show loading state
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppTheme.primary),
+            SizedBox(height: 16),
+            Text('Loading alerts...'),
+          ],
+        ),
+      );
+    }
+
+    // Show error state
+    if (_errorMessage != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.search_off,
+              Icons.error_outline,
               size: 64,
-              color: AppTheme.mutedForeground,
+              color: AppTheme.destructive,
             ),
             const SizedBox(height: 16),
             Text(
-              'No alerts found with current filters',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppTheme.mutedForeground),
+              _errorMessage!,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.mutedForeground),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchAlerts,
+              child: const Text('Retry'),
             ),
           ],
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: filteredAlerts.length,
-      itemBuilder: (context, index) {
-        return _buildAlertCard(filteredAlerts[index]);
-      },
+    if (filteredAlerts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              size: 64,
+              color: AppTheme.success,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No active alerts nearby',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.mutedForeground),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Report an incident to help others',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchAlerts,
+      color: AppTheme.primary,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+        itemCount: filteredAlerts.length,
+        itemBuilder: (context, index) {
+          return _buildAlertCard(filteredAlerts[index]);
+        },
+      ),
     );
   }
 
+
   Widget _buildMapView(List<AlertModel> filteredAlerts) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade50, Colors.green.shade50],
-        ),
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.map, size: 64, color: AppTheme.secondary),
-              const SizedBox(height: 16),
-              Text(
-                'Map View',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Interactive map showing ${filteredAlerts.length} active alerts in your area',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.mutedForeground,
+    // Build dynamic markers from fetched alerts
+    final List<Marker> alertMarkers = filteredAlerts
+        .where((alert) => alert.latitude != null && alert.longitude != null)
+        .map((alert) {
+      return Marker(
+        point: LatLng(alert.latitude!, alert.longitude!),
+        width: 40,
+        height: 40,
+        child: GestureDetector(
+          onTap: () {
+            // Show alert details in a bottom sheet
+            _showAlertDetails(alert);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: _getSeverityColor(alert.severity),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: _getSeverityColor(alert.severity).withOpacity(0.5),
+                  blurRadius: 8,
+                  spreadRadius: 2,
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Icon(
+              _getDisasterIcon(alert.type),
+              color: Colors.white,
+              size: 20,
+            ),
           ),
         ),
-      ),
+      );
+    }).toList();
+
+    return Stack(
+      children: [
+        // Fullscreen OpenStreetMap
+        FlutterMap(
+          options: MapOptions(
+            initialCenter: const LatLng(28.6139, 77.2090), // Delhi
+            initialZoom: 11.0,
+          ),
+          children: [
+            // OpenStreetMap Tiles
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.aapdaSetu.app',
+            ),
+            // 5km Radius Circle
+            CircleLayer(
+              circles: [
+                CircleMarker(
+                  point: const LatLng(28.6139, 77.2090),
+                  radius: 5000, // 5km in meters
+                  useRadiusInMeter: true,
+                  color: AppTheme.primary.withOpacity(0.1),
+                  borderColor: AppTheme.primary.withOpacity(0.5),
+                  borderStrokeWidth: 2,
+                ),
+              ],
+            ),
+            // Dynamic Alert Markers from API
+            MarkerLayer(markers: alertMarkers),
+            // User Location Marker
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: const LatLng(28.6139, 77.2090),
+                  width: 24,
+                  height: 24,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.4),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+
+
+        // Bottom info overlay
+        Positioned(
+          bottom: 100, // Clear the nav bar
+          left: 16,
+          right: 16,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.primary, width: 2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Alert Radius: 5 km',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${filteredAlerts.length} alerts',
+                    style: const TextStyle(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

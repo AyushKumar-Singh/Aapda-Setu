@@ -1,4 +1,10 @@
-# Flutter/Dart
+# =============================================================================
+# Aapda Setu - Git Ignore
+# =============================================================================
+
+# =============================================================================
+# FLUTTER / DART
+# =============================================================================
 .dart_tool/
 .packages
 .pub-cache/
@@ -12,14 +18,44 @@ build/
 *.js.deps
 *.js.map
 
-# Dependencies
+# Flutter generated files
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# =============================================================================
+# FLUTTER BUILD OUTPUTS (APK/IPA)
+# =============================================================================
+# Android
+*.apk
+*.aab
+android/app/release/
+android/.gradle/
+android/local.properties
+android/app/src/main/res/drawable-*/
+
+# iOS
+*.ipa
+*.dSYM.zip
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner/GeneratedPluginRegistrant.*
+
+# =============================================================================
+# NODE.JS
+# =============================================================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.npm
+.yarn-integrity
 
-# Python
+# =============================================================================
+# PYTHON
+# =============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -28,30 +64,67 @@ __pycache__/
 venv/
 env/
 ENV/
-.venv
+.venv/
 
-# Environment Variables
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
 .env
 .env.local
 .env.*.local
 *.env
+!.env.example
 
-# Build outputs
+# =============================================================================
+# BUILD OUTPUTS
+# =============================================================================
 dist/
 build/
 .next/
 out/
 *.log
 
-# IDEs
+# =============================================================================
+# IDE & EDITORS
+# =============================================================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
+*.sublime-project
+*.sublime-workspace
 
-# Testing
+# =============================================================================
+# OS FILES
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Mac
+.AppleDouble
+.LSOverride
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+docker-compose.override.yml
+
+# Docker volumes (if stored locally)
+.docker-data/
+mongo-data/
+redis-data/
+
+# =============================================================================
+# TESTING
+# =============================================================================
 coverage/
 .nyc_output/
 *.coverage
@@ -59,12 +132,9 @@ htmlcov/
 .pytest_cache/
 .testmon*
 
-# OS
-Thumbs.db
-.DS_Store
-*.bak
-
-# ML Models (large files - use Git LFS if needed)
+# =============================================================================
+# ML MODELS (Large files - use Git LFS if needed)
+# =============================================================================
 *.pkl
 *.h5
 *.pth
@@ -72,48 +142,64 @@ Thumbs.db
 *.pt
 models/weights/
 
-# Logs
+# =============================================================================
+# LOGS
+# =============================================================================
 logs/
 *.log
 pm2.log
 
-# Database
+# =============================================================================
+# DATABASE FILES
+# =============================================================================
 *.sqlite
 *.db
+*.sqlite3
 
-# Temporary files
+# =============================================================================
+# TEMPORARY FILES
+# =============================================================================
 tmp/
 temp/
 *.tmp
+*.temp
+*.bak
+*.backup
+*.old
 
-# Media uploads (use S3 in production)
+# =============================================================================
+# MEDIA UPLOADS (Use cloud storage in production)
+# =============================================================================
 uploads/
 media/
 
-# Certificates & Keys
+# =============================================================================
+# CERTIFICATES & KEYS (NEVER COMMIT!)
+# =============================================================================
 *.pem
 *.key
 *.crt
 *.p12
 service-account-key.json
+google-services.json
+GoogleService-Info.plist
 
-# Docker
-.dockerignore
-docker-compose.override.yml
-
-# Cloud
+# =============================================================================
+# CLOUD DEPLOYMENT
+# =============================================================================
 .vercel
 .netlify
 
-# Mac
-.AppleDouble
-.LSOverride
+# =============================================================================
+# PROJECT SPECIFIC
+# =============================================================================
+# Screenshots and recordings from testing
+*_recording*.webp
+*_screenshot*.png
+*.png
+!README.md
+!web/
 
-# Windows
-Desktop.ini
-$RECYCLE.BIN/
-
-# Backup files
-*.backup
-*.bak
-*.old
+# Lock files (optional - uncomment if you want to ignore)
+# package-lock.json
+# pubspec.lock

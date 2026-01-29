@@ -10,6 +10,9 @@ import 'screens/alerts_screen.dart';
 import 'screens/chatbot_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/moderator_dashboard.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/terms_of_service_screen.dart';
+import 'screens/help_support_screen.dart';
 import 'widgets/bottom_navigation.dart';
 
 void main() {
@@ -139,12 +142,24 @@ class _AppNavigatorState extends State<AppNavigator> {
               onBack: () => _handleNavigate('home'),
               onLogout: _handleLogout,
               isModerator: _isModerator,
+              onPrivacyPolicy: () => _handleNavigate('privacy'),
+              onTermsOfService: () => _handleNavigate('terms'),
+              onHelpSupport: () => _handleNavigate('help'),
             )
           else if (_currentScreen == 'moderator')
-            ModeratorDashboard(onBack: () => _handleNavigate('home')),
+            ModeratorDashboard(onBack: () => _handleNavigate('home'))
+          else if (_currentScreen == 'privacy')
+            PrivacyPolicyScreen(onBack: () => _handleNavigate('profile'))
+          else if (_currentScreen == 'terms')
+            TermsOfServiceScreen(onBack: () => _handleNavigate('profile'))
+          else if (_currentScreen == 'help')
+            HelpSupportScreen(onBack: () => _handleNavigate('profile')),
 
-          // Bottom Navigation (hide on report screen)
-          if (_currentScreen != 'report')
+          // Bottom Navigation (hide on report and legal screens)
+          if (_currentScreen != 'report' && 
+              _currentScreen != 'privacy' && 
+              _currentScreen != 'terms' && 
+              _currentScreen != 'help')
             Positioned(
               bottom: 0,
               left: 0,

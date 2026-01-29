@@ -32,7 +32,7 @@ class _ModeratorDashboardState extends State<ModeratorDashboard>
   void _loadReports() {
     _reports = [
       AlertModel(
-        id: 1,
+        id: '1',
         type: 'fire',
         title: 'Fire in Commercial Building',
         location: 'Sector 15, Dwarka',
@@ -46,7 +46,7 @@ class _ModeratorDashboardState extends State<ModeratorDashboard>
         aiConfidence: 92,
       ),
       AlertModel(
-        id: 2,
+        id: '2',
         type: 'flood',
         title: 'Water Logging on Highway',
         location: 'NH-8, Gurgaon',
@@ -60,7 +60,7 @@ class _ModeratorDashboardState extends State<ModeratorDashboard>
         aiConfidence: 88,
       ),
       AlertModel(
-        id: 3,
+        id: '3',
         type: 'accident',
         title: 'Vehicle Collision',
         location: 'Ring Road, Delhi',
@@ -117,7 +117,7 @@ class _ModeratorDashboardState extends State<ModeratorDashboard>
     return _reports.where((r) => r.verified).toList();
   }
 
-  void _handleApprove(int reportId) {
+  void _handleApprove(String reportId) {
     setState(() {
       final index = _reports.indexWhere((r) => r.id == reportId);
       if (index != -1) {
@@ -146,7 +146,7 @@ class _ModeratorDashboardState extends State<ModeratorDashboard>
     );
   }
 
-  void _handleReject(int reportId) {
+  void _handleReject(String reportId) {
     setState(() {
       _reports.removeWhere((r) => r.id == reportId);
     });

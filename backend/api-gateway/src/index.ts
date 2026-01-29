@@ -12,6 +12,7 @@ import { usersRouter } from './routes/users.routes';
 import { analyticsRouter } from './routes/analytics.routes';
 import { mediaRouter } from './routes/media.routes';
 import { chatbotRouter } from './routes/chatbot.routes';
+import { healthRouter } from './routes/health.routes';
 import { errorHandler } from './middlewares/error.middleware';
 
 // Import ML queue initializer
@@ -26,11 +27,13 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+// CORS configuration - allow all origins for hackathon demo
+// For production, restrict to specific origins
 app.use(cors({
-    origin: allowedOrigins,
-    credentials: true
+    origin: true, // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body parsing
@@ -59,6 +62,7 @@ app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/admin', analyticsRouter);
 app.use('/api/v1/media', mediaRouter);
 app.use('/api/v1/chatbot', chatbotRouter);
+app.use('/api/v1/health', healthRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

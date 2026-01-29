@@ -1,356 +1,351 @@
 # Aapda Setu - Deployment Guide
 
-Complete guide for deploying the Aapda Setu disaster response platform.
+Complete deployment guide for the Aapda Setu AI Disaster & Emergency Response MVP.
 
 ---
 
-## 🐳 Docker Deployment (Recommended)
+## 🚀 Quick Start (Hackathon Demo)
 
 ### Prerequisites
 - Docker Desktop installed and running
-- At least 8GB RAM available
-- Ports 3000, 5000, 6379, 8000, 8001, 27017 free
+- Node.js 18+ installed
+- Ollama installed ([download](https://ollama.ai))
+- Flutter SDK installed
+- Android phone on same WiFi as laptop
 
-### Quick Start
+### 1-Minute Setup
 
 ```bash
-# Navigate to infra folder
-cd infra
-
-# Copy environment template
-cp .env.example .env
-
-# Start all services
+# 1. Start MongoDB (Docker)
 docker-compose up -d
 
-# View logs
-docker-compose logs -f
+# 2. Start Ollama
+ollama serve
 
-# Seed database with sample data
-docker exec aapda-api-gateway npx ts-node src/scripts/seed.ts
-```
+# 3. Create AI model (first time only)
+cd backend/ollama && ollama create aapda-assistant -f Modelfile
 
-### Service URLs
-| Service | URL |
-|---------|-----|
-| Admin Dashboard | http://localhost:3000 |
-| API Gateway | http://localhost:5000 |
-| ML CPU Service | http://localhost:8000 |
-| ML GPU Service | http://localhost:8001 |
-| MongoDB | localhost:27017 |
-| Redis | localhost:6379 |
+# 4. Start backend
+cd backend/api-gateway
+npm install
+npm run dev
 
-### Stop Services
-```bash
-docker-compose down
-
-# Remove volumes (clears database)
-docker-compose down -v
+# 5. Build APK (optional - use existing release)
+flutter build apk --release
 ```
 
 ---
 
-## 🔧 Manual Setup (Development)
+## 📱 Local MVP Startup (Hackathon Demo)
 
-### Step 1: Install Prerequisites
+### Step 1: Start MongoDB via Docker
 
-#### Windows
-```powershell
-# Install Node.js 18+ from https://nodejs.org
-# Install Python 3.9+ from https://python.org
-# Install MongoDB from https://www.mongodb.com/try/download/community
-# Install Redis using WSL or Docker
-```
-
-#### macOS
 ```bash
-brew install node@18 python@3.9 mongodb-community redis
-brew services start mongodb-community
-brew services start redis
+# From project root
+docker-compose up -d
+
+# Verify MongoDB is running
+docker ps | grep mongodb
+# Expected: aapda-mongodb running on port 27017
+
+# Check logs if needed
+docker logs aapda-mongodb
 ```
 
-#### Linux (Ubuntu/Debian)
-```bash
-# Node.js
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Python
-sudo apt install python3.9 python3-pip python3-venv
-
-# MongoDB
-sudo apt install mongodb
-
-# Redis
-sudo apt install redis-server
-sudo systemctl start redis
-```
-
----
-
-### Step 2: Database Setup
-
-#### Option A: Local MongoDB
-```bash
-# Start MongoDB service
-# Windows: Start MongoDB service from Services
-# macOS: brew services start mongodb-community
-# Linux: sudo systemctl start mongodb
-
-# Connect and create database
-mongosh
-> use Aapda-Setu
-> db.createCollection("reports")
-> db.createCollection("alerts")
-> db.createCollection("users")
-```
-
-#### Option B: Docker MongoDB (Recommended)
-```bash
-# Start MongoDB container
-docker run -d \
-  --name aapda-mongo \
-  -p 27017:27017 \
-  -v mongodb_data:/data/db \
-  mongo:5.0
-
-# Start Redis container
-docker run -d \
-  --name aapda-redis \
-  -p 6379:6379 \
-  redis:7-alpine
-```
-
-#### Option C: MongoDB Atlas (Cloud)
-1. Create account at https://cloud.mongodb.com
-2. Create new cluster (free tier available)
-3. Add database user with password
-4. Whitelist your IP (or 0.0.0.0/0 for development)
-5. Get connection string:
-   ```
-   mongodb+srv://<username>:<password>@cluster.xxxxx.mongodb.net/Aapda-Setu
-   ```
-6. Update `.env` with connection string
-
----
-
-### Step 3: Backend API Gateway
+### Step 2: Start Node.js Backend
 
 ```bash
 cd backend/api-gateway
 
-# Install dependencies
+# Install dependencies (first time)
 npm install
 
-# Create environment file
+# Copy environment file (first time)
 cp .env.example .env
 
-# Edit .env file with your settings:
-# - MONGODB_URI=mongodb://localhost:27017/Aapda-Setu
-# - REDIS_HOST=localhost
-# - JWT_SECRET=your-secret-key
+# Edit .env if needed - ensure these are set:
+# MONGODB_URI=mongodb://127.0.0.1:27017/aapdasetu
+# OLLAMA_URL=http://127.0.0.1:11434
 
 # Start development server
 npm run dev
 ```
 
-Server runs on: http://localhost:5000
+**Expected output:**
+```
+╔════════════════════════════════════════════╗
+║       ✅ MongoDB Connected Successfully    ║
+╠════════════════════════════════════════════╣
+║  Database: aapdasetu                       ║
+║  Host: 127.0.0.1:27017                     ║
+╚════════════════════════════════════════════╝
 
-#### Test API Health
+🚀 API Gateway running on port 5000
+```
+
+### Step 3: Start Ollama Server
+
 ```bash
+# In a new terminal
+ollama serve
+
+# First time only - create the model
+cd backend/ollama
+ollama create aapda-assistant -f Modelfile
+```
+
+**Verify Ollama is working:**
+```bash
+curl http://127.0.0.1:11434/api/tags
+# Should list available models including aapda-assistant
+```
+
+### Step 4: Connect Phone APK to Laptop
+
+1. **Find your laptop's LAN IP:**
+   ```powershell
+   # Windows
+   ipconfig
+   # Look for "IPv4 Address" under WiFi adapter (e.g., 192.168.1.100)
+   ```
+
+2. **Update Flutter app (if rebuilding):**
+   - Open `lib/services/api_service.dart`
+   - Update line 33: `static const String _lanIP = '192.168.1.100';`
+   - Rebuild APK
+
+3. **Install APK on phone:**
+   - Transfer APK to phone
+   - Install and open app
+   - Ensure phone is on same WiFi network
+
+### Step 5: Verify Everything Works
+
+```bash
+# Test all health endpoints
 curl http://localhost:5000/health
+curl http://localhost:5000/api/v1/health/db
+curl http://localhost:5000/api/v1/health/ollama
+curl http://localhost:5000/api/v1/health/all
+
+# Expected: All services show "status": "ok"
 ```
 
 ---
 
-### Step 4: ML Services
+## 📦 Build Release APK
 
-#### ML CPU Service (Text Analysis)
+### Clean Build
+
 ```bash
-cd backend/ml-service-cpu
+# Navigate to project root
+cd c:\Users\ayush\Desktop\Aapda-Setu
 
-# Create virtual environment
-python -m venv venv
+# Clean previous builds
+flutter clean
 
-# Activate (Windows)
-venv\Scripts\activate
+# Get dependencies
+flutter pub get
 
-# Activate (macOS/Linux)
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start server
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Build release APK
+flutter build apk --release
 ```
 
-#### ML GPU Service (Image Analysis)
-```bash
-cd backend/ml-service-gpu
-
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
-
-uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+**Output location:**
+```
+build/app/outputs/flutter-apk/app-release.apk
 ```
 
-#### AI Service (Flask)
+### Build App Bundle (Play Store)
+
 ```bash
-cd backend/ai-service
+flutter build appbundle --release
+```
 
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-python app.py
+**Output location:**
+```
+build/app/outputs/bundle/release/app-release.aab
 ```
 
 ---
 
-### Step 5: Admin Dashboard
+## 🏷️ GitHub Release Instructions
 
-```bash
-cd admin-dashboard
+### Create a New Release
 
-# Install dependencies
-npm install
+1. **Go to GitHub Releases:**
+   - Navigate to: https://github.com/AyushKumar-Singh/Aapda-Setu/releases
+   - Click "Draft a new release"
 
-# Start development server
-npm run dev
-```
+2. **Create a Tag:**
+   - Click "Choose a tag"
+   - Enter version: `v1.0.0` (or next version)
+   - Click "Create new tag: v1.0.0 on publish"
 
-Dashboard runs on: http://localhost:3000
+3. **Fill Release Details:**
+   ```
+   Release title: v1.0.0 - Hackathon MVP
 
----
+   ## What's New
+   - AI-powered disaster chatbot using Ollama
+   - Interactive map with OpenStreetMap
+   - Real-time incident reporting
+   - MongoDB-backed alert system
 
-### Step 6: Seed Database
+   ## Installation
+   1. Download app-release.apk below
+   2. Enable "Install from unknown sources"
+   3. Install and open the app
+   4. Connect to backend at your laptop's IP
 
-```bash
-cd backend/api-gateway
+   ## Requirements
+   - Android 6.0+ (API 23)
+   - Backend server running on local network
+   ```
 
-# Run seed script
-npx ts-node src/scripts/seed.ts
-```
+4. **Upload APK:**
+   - Drag `build/app/outputs/flutter-apk/app-release.apk`
+   - Wait for upload to complete
 
-This creates sample:
-- 6 users (admin, verifier, responder, etc.)
-- 5 disaster reports (fire, flood, earthquake, etc.)
-- 4 emergency alerts
-
----
-
-## 🌐 Production Deployment
-
-### Environment Variables
-
-```env
-# Required for production
-NODE_ENV=production
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/aapda-setu
-REDIS_HOST=redis-server-host
-JWT_SECRET=strong-random-secret-min-32-chars
-ALLOWED_ORIGINS=https://yourdomain.com
-```
-
-### Using Docker Compose (Production)
-
-```bash
-cd infra
-
-# Use production overrides
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# Scale services
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale api-gateway=3
-```
-
-### Cloud Deployment Options
-
-| Platform | Service | Use For |
-|----------|---------|---------|
-| Vercel | Frontend | Admin Dashboard |
-| Railway | Backend | API Gateway |
-| Render | Backend | ML Services |
-| MongoDB Atlas | Database | MongoDB |
-| Redis Cloud | Cache | Redis |
-| AWS EC2/ECS | All | Full stack |
-| Google Cloud Run | All | Containers |
-
-### Vercel Deployment (Dashboard)
-
-```bash
-cd admin-dashboard
-npm i -g vercel
-vercel login
-vercel --prod
-```
-
-Set environment variables in Vercel dashboard:
-- `NEXT_PUBLIC_API_BASE_URL`
-- `NEXT_PUBLIC_MAP_STYLE_URL`
+5. **Publish:**
+   - Click "Publish release"
 
 ---
 
-## 🛠️ Troubleshooting
+## 🔧 Troubleshooting
 
-### MongoDB Connection Failed
+### MongoDB Case Conflict Fix
+
+**Problem:** `MongoServerError: database names are case insensitive`
+
+**Solution:**
 ```bash
-# Check if MongoDB is running
-mongosh --eval "db.runCommand('ping')"
+# Connect to MongoDB
+docker exec -it aapda-mongodb mongosh
 
-# Check Docker container
-docker ps | grep mongo
-docker logs aapda-mongo
+# Drop the conflicting database
+use admin
+db.dropDatabase()
+
+# Or rename (not supported directly - export/import instead)
 ```
 
-### Redis Connection Failed
-```bash
-# Check Redis
-redis-cli ping
+**Prevention:** Always use lowercase `aapdasetu` in:
+- `.env` files
+- `docker-compose.yml`
+- All connection strings
 
-# Check Docker container
-docker logs aapda-redis
+### Ollama Offline Fallback
+
+**Problem:** Chatbot shows "AI Assistant temporarily unavailable"
+
+**Check Ollama status:**
+```bash
+# Is Ollama running?
+curl http://127.0.0.1:11434/api/tags
+
+# If connection refused:
+ollama serve
+
+# Is model loaded?
+ollama list
+# Should show: aapda-assistant
+
+# If model missing:
+cd backend/ollama
+ollama create aapda-assistant -f Modelfile
+```
+
+**Test chatbot directly:**
+```bash
+curl -X POST http://localhost:5000/api/v1/chatbot/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What to do during earthquake?"}'
+```
+
+### Phone Cannot Reach Backend IP
+
+**Problem:** Flutter app cannot connect to backend
+
+**Checklist:**
+1. ✅ Phone and laptop on same WiFi network
+2. ✅ Correct LAN IP in `api_service.dart`
+3. ✅ Backend running on `0.0.0.0:5000` (not just localhost)
+4. ✅ Windows Firewall allows port 5000
+
+**Fix Windows Firewall:**
+```powershell
+# Run as Administrator
+netsh advfirewall firewall add rule name="Aapda Setu API" dir=in action=allow protocol=tcp localport=5000
+```
+
+**Test from phone browser:**
+```
+http://192.168.1.100:5000/health
+# Replace with your laptop's IP
 ```
 
 ### Port Already in Use
-```bash
-# Find process using port (Windows)
-netstat -ano | findstr :5000
-taskkill /PID <pid> /F
 
-# Find process using port (macOS/Linux)
-lsof -i :5000
-kill -9 <pid>
+**Problem:** `EADDRINUSE: address already in use :::5000`
+
+**Solution:**
+```powershell
+# Find process using port
+netstat -ano | findstr :5000
+
+# Kill the process (replace <PID> with actual PID)
+taskkill /PID <PID> /F
 ```
 
-### Docker Build Failed
-```bash
-# Clean Docker cache
-docker system prune -a
+### Docker Container Issues
 
-# Rebuild without cache
-docker-compose build --no-cache
+**Problem:** MongoDB container not starting
+
+**Solution:**
+```bash
+# Check container status
+docker ps -a
+
+# View logs
+docker logs aapda-mongodb
+
+# Restart container
+docker-compose restart mongodb
+
+# Full reset (WARNING: deletes data)
+docker-compose down -v
+docker-compose up -d
 ```
 
 ---
 
-## 📊 Health Checks
+## 📊 Health Check Endpoints
 
-```bash
-# API Gateway
-curl http://localhost:5000/health
+| Endpoint | Description |
+|----------|-------------|
+| `GET /health` | Basic API health |
+| `GET /api/v1/health` | Detailed API status |
+| `GET /api/v1/health/db` | MongoDB connection status |
+| `GET /api/v1/health/ollama` | Ollama AI service status |
+| `GET /api/v1/health/all` | Comprehensive system check |
 
-# ML CPU Service
-curl http://localhost:8000/health
+**Pre-demo verification script:**
+```powershell
+# Run all health checks
+$base = "http://localhost:5000"
 
-# ML GPU Service  
-curl http://localhost:8001/health
+Write-Host "Checking API..."
+Invoke-RestMethod "$base/health"
 
-# Full health check script
-cd infra
-./scripts/health-check.sh
+Write-Host "Checking Database..."
+Invoke-RestMethod "$base/api/v1/health/db"
+
+Write-Host "Checking Ollama..."
+Invoke-RestMethod "$base/api/v1/health/ollama"
+
+Write-Host "Full System Check..."
+Invoke-RestMethod "$base/api/v1/health/all"
 ```
 
 ---
@@ -359,19 +354,45 @@ cd infra
 
 ```
 Aapda-Setu/
-├── admin-dashboard/     # Next.js frontend
+├── lib/                     # Flutter mobile app
+│   ├── screens/            # App screens
+│   ├── services/           # API service
+│   ├── models/             # Data models
+│   └── main.dart           # App entry point
 ├── backend/
-│   ├── api-gateway/     # Node.js API (port 5000)
-│   ├── ml-service-cpu/  # FastAPI text ML (port 8000)
-│   ├── ml-service-gpu/  # FastAPI image ML (port 8001)
-│   └── ai-service/      # Flask AI service
-├── infra/
-│   ├── docker-compose.yml
-│   ├── docker-compose.dev.yml
-│   ├── docker-compose.prod.yml
-│   ├── dockerfiles/
-│   ├── nginx/
-│   └── scripts/
-├── lib/                 # Flutter mobile app
-└── DEPLOYMENT.md        # This file
+│   ├── api-gateway/        # Node.js API (port 5000)
+│   │   ├── src/
+│   │   │   ├── routes/     # API endpoints
+│   │   │   ├── models/     # MongoDB schemas
+│   │   │   └── config/     # Database config
+│   │   └── .env            # Environment config
+│   └── ollama/             # AI model config
+│       └── Modelfile       # Ollama model definition
+├── docker-compose.yml      # MVP Docker setup
+├── .env.example            # Environment template
+├── DEPLOYMENT.md           # This file
+└── build/                  # Flutter build outputs
 ```
+
+---
+
+## 🔒 Security Notes
+
+**For Production Deployment:**
+
+1. **Change JWT_SECRET** - Generate new secure secret
+2. **Enable HTTPS** - Use SSL certificates
+3. **Restrict CORS** - Limit to specific domains
+4. **Use MongoDB Auth** - Enable authentication
+5. **Firewall Rules** - Limit exposed ports
+6. **Environment Variables** - Never commit `.env` files
+
+---
+
+## 📞 Emergency Contacts (Built into App)
+
+- **National Emergency:** 112
+- **Fire:** 101
+- **Ambulance:** 108
+- **Police:** 100
+- **NDMA Helpline:** 1078

@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../theme/app_theme.dart';
 import '../models/alert_model.dart';
+import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -21,36 +22,36 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   double _radius = 5.0;
   final TextEditingController _searchController = TextEditingController();
+  
+  // Dynamic alerts loading
+  List<AlertModel> _recentAlerts = [];
+  bool _isLoading = true;
 
-  final List<AlertModel> recentAlerts = [
-    AlertModel(
-      id: 1,
-      type: 'fire',
-      title: 'Fire in Residential Area',
-      location: 'Sector 15, Dwarka',
-      distance: 2.3,
-      verified: true,
-      severity: 'high',
-    ),
-    AlertModel(
-      id: 2,
-      type: 'flood',
-      title: 'Water Logging Reported',
-      location: 'Ring Road, Nehru Place',
-      distance: 4.1,
-      verified: true,
-      severity: 'medium',
-    ),
-    AlertModel(
-      id: 3,
-      type: 'earthquake',
-      title: 'Tremors Detected',
-      location: 'Delhi NCR Region',
-      distance: 8.5,
-      verified: false,
-      severity: 'low',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecentAlerts();
+  }
+
+  Future<void> _fetchRecentAlerts() async {
+    try {
+      final reports = await ApiService().getPublicReports();
+      if (mounted) {
+        setState(() {
+          _recentAlerts = reports
+              .take(3) // Only show 3 on home screen
+              .map((json) => AlertModel.fromJson(json))
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('[HomeScreen] Error fetching alerts: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -302,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               Text(
-                                '${recentAlerts.length} alerts',
+                                '${_recentAlerts.length} alerts',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
@@ -407,10 +408,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ...recentAlerts.map((alert) => _buildAlertCard(alert)),
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_recentAlerts.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('No recent alerts in your area'),
+                      ),
+                    )
+                  else
+                    ..._recentAlerts.map((alert) => _buildAlertCard(alert)),
                 ],
               ),
             ),
+          ),
+
+          // Bottom spacing for navigation bar
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 100),
           ),
         ],
       ),

@@ -4,12 +4,18 @@ import '../theme/app_theme.dart';
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onLogout;
+  final VoidCallback? onPrivacyPolicy;
+  final VoidCallback? onTermsOfService;
+  final VoidCallback? onHelpSupport;
   final bool isModerator;
 
   const ProfileScreen({
     super.key,
     required this.onBack,
     required this.onLogout,
+    this.onPrivacyPolicy,
+    this.onTermsOfService,
+    this.onHelpSupport,
     this.isModerator = false,
   });
 
@@ -100,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           child: const Center(
                             child: Text(
-                              'AK',
+                              'DU',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 32,
@@ -111,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Amit Kumar',
+                          'Demo User',
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(color: Colors.white),
                         ),
@@ -119,10 +125,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.phone, color: Colors.white, size: 16),
+                            Icon(Icons.email, color: Colors.white, size: 16),
                             SizedBox(width: 8),
                             Text(
-                              '+91 98765 43210',
+                              'user@example.com',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -178,9 +184,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildStatColumn('12', 'Reports Submitted'),
-                  _buildStatColumn('8', 'Verified Reports'),
-                  _buildStatColumn('95%', 'Accuracy Score'),
+                  _buildStatColumn('0', 'Reports Submitted'),
+                  _buildStatColumn('0', 'Verified Reports'),
+                  _buildStatColumn('--', 'Accuracy Score'),
                 ],
               ),
             ),
@@ -253,14 +259,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildListTile(
                     Icons.privacy_tip,
                     'Privacy Policy',
-                    onTap: () {},
+                    onTap: widget.onPrivacyPolicy,
                   ),
                   _buildListTile(
                     Icons.description,
                     'Terms of Service',
-                    onTap: () {},
+                    onTap: widget.onTermsOfService,
                   ),
-                  _buildListTile(Icons.help, 'Help & Support', onTap: () {}),
+                  _buildListTile(Icons.help, 'Help & Support', onTap: widget.onHelpSupport),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -316,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Powered by AI, verified by community',
+                        'Powered by AI • Verified by Community • MVP Prototype',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

@@ -1,0 +1,80 @@
+# Aapda Setu MVP - Docker Compose
+# =================================
+# Simplified setup for hackathon demo
+# 
+# Usage:
+#   docker-compose up -d          # Start services
+#   docker-compose logs -f        # View logs
+#   docker-compose down           # Stop services
+#   docker-compose down -v        # Stop and remove volumes
+
+version: '3.8'
+
+services:
+  # ============================================
+  # MongoDB Database
+  # ============================================
+  mongodb:
+    image: mongo:5.0
+    container_name: aapda-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      # Use lowercase database name consistently
+      - MONGO_INITDB_DATABASE=aapdasetu
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Redis Cache (Optional)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: aapda-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+# ============================================
+# Persistent Volumes
+# ============================================
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ============================================
+# NOTES FOR HACKATHON DEMO:
+# ============================================
+# 
+# 1. Start containers:
+#    docker-compose up -d
+#
+# 2. Start Node.js backend (run separately):
+#    cd backend/api-gateway && npm run dev
+#
+# 3. Start Ollama (run separately):
+#    ollama serve
+#
+# 4. Connect Flutter app to backend:
+#    - Find laptop IP: ipconfig (look for IPv4)
+#    - Update lib/services/api_service.dart _lanIP
+#    - Rebuild APK: flutter build apk --release
+#
+# 5. MongoDB connection string:
+#    mongodb://127.0.0.1:27017/aapdasetu
+# ============================================
