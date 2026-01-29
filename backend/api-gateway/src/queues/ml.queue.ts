@@ -1,13 +1,15 @@
-import { Queue, Worker } from 'bullmq';
+import { Queue, Worker, QueueEvents } from 'bullmq';
 import axios from 'axios';
 
 const ML_CPU_URL = process.env.ML_CPU_URL || 'http://localhost:8000';
 const ML_GPU_URL = process.env.ML_GPU_URL || 'http://localhost:8001';
 
-// Lazy-initialized queues and workers
+// Lazy-initialized queues, workers, and queue events
 let textAnalysisQueue: Queue;
 let imageAnalysisQueue: Queue;
 let fusionQueue: Queue;
+let textAnalysisEvents: QueueEvents;
+let imageAnalysisEvents: QueueEvents;
 let textWorker: Worker;
 let imageWorker: Worker;
 let fusionWorker: Worker;
@@ -30,6 +32,10 @@ export const initializeMLQueues = () => {
     textAnalysisQueue = new Queue('text-analysis', { connection });
     imageAnalysisQueue = new Queue('image-analysis', { connection });
     fusionQueue = new Queue('fusion-analysis', { connection });
+
+    // Create queue events for waiting on job completion
+    textAnalysisEvents = new QueueEvents('text-analysis', { connection });
+    imageAnalysisEvents = new QueueEvents('image-analysis', { connection });
 
     // Text Analysis Worker
     textWorker = new Worker(
@@ -159,13 +165,13 @@ export const triggerMLPipeline = async (reportId: string, text: string, imageUrl
 
         // Wait for both to complete, then run fusion
         Promise.all([
-            textJob.waitUntilFinished(textAnalysisQueue.events),
-            imageJob ? imageJob.waitUntilFinished(imageAnalysisQueue.events) : Promise.resolve({ image_score: 0.5 })
-        ]).then(async ([textResult, imageResult]) => {
+            textJob.waitUntilFinished(textAnalysisEvents),
+            imageJob ? imageJob.waitUntilFinished(imageAnalysisEvents) : Promise.resolve({ image_score: 0.5 })
+        ]).then(async ([textResult, imageResult]: [any, any]) => {
             await fusionQueue.add('fuse', {
                 report_id: reportId,
-                text_score: textResult.text_score,
-                image_score: imageResult.image_score,
+                text_score: textResult?.text_score ?? 0.5,
+                image_score: imageResult?.image_score ?? 0.5,
                 metadata_features: {
                     has_image: imageUrls.length > 0 ? 1 : 0,
                     text_length: text.length

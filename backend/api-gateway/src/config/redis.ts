@@ -1,9 +1,12 @@
-import { createClient, RedisClientType } from 'redis';
+import { createClient } from 'redis';
 
-let redisClient: RedisClientType | null = null;
+// Use ReturnType to get the correct type from createClient
+type RedisClient = ReturnType<typeof createClient>;
+
+let redisClient: RedisClient | null = null;
 let redisAvailable = false;
 
-export const connectRedis = async (): Promise<RedisClientType | null> => {
+export const connectRedis = async (): Promise<RedisClient | null> => {
     try {
         const client = createClient({
             socket: {
@@ -49,7 +52,7 @@ export const connectRedis = async (): Promise<RedisClientType | null> => {
     }
 };
 
-export const getRedisClient = (): RedisClientType | null => {
+export const getRedisClient = (): RedisClient | null => {
     return redisClient;
 };
 

@@ -92,9 +92,10 @@ const startServer = async () => {
             console.log('⚠ Running without Redis (caching disabled)');
         }
 
-        // Start Express server
-        app.listen(PORT, () => {
-            console.log(`🚀 API Gateway running on port ${PORT}`);
+        // Start Express server (bind to 0.0.0.0 for Render compatibility)
+        const port = typeof PORT === 'string' ? parseInt(PORT, 10) : PORT;
+        app.listen(port, '0.0.0.0', () => {
+            console.log(`🚀 API Gateway running on port ${port}`);
             console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
         });
     } catch (error) {

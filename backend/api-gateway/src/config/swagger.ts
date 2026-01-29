@@ -16,8 +16,12 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:3000',
+                url: `http://localhost:${process.env.PORT || 5000}`,
                 description: 'Development server'
+            },
+            {
+                url: process.env.RENDER_EXTERNAL_URL || 'https://aapda-setu-api.onrender.com',
+                description: 'Render deployment'
             },
             {
                 url: 'https://api.aapdasetu.in',

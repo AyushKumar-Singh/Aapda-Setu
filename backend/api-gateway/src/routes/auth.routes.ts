@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User.model';
 import { AppError } from '../middlewares/error.middleware';
 import { AuthRequest, authenticate } from '../middlewares/auth.middleware';
@@ -23,6 +23,9 @@ router.post('/admin/login', async (req: Request, res: Response) => {
         }
 
         // Generate JWT token
+        const accessTokenOptions = {
+            expiresIn: (process.env.JWT_EXPIRES_IN || '1h') as string
+        } as SignOptions;
         const accessToken = jwt.sign(
             {
                 userId: user.user_id,
@@ -30,19 +33,18 @@ router.post('/admin/login', async (req: Request, res: Response) => {
                 tenantId: user.tenant_id
             },
             process.env.JWT_SECRET!,
-            {
-                expiresIn: process.env.JWT_EXPIRES_IN || '1h'
-            }
+            accessTokenOptions
         );
 
+        const refreshTokenOptions = {
+            expiresIn: (process.env.REFRESH_TOKEN_EXPIRES_IN || '7d') as string
+        } as SignOptions;
         const refreshToken = jwt.sign(
             {
                 userId: user.user_id
             },
             process.env.JWT_SECRET!,
-            {
-                expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d'
-            }
+            refreshTokenOptions
         );
 
         // Update last login
@@ -151,6 +153,9 @@ router.post('/refresh', async (req: Request, res: Response) => {
             throw new AppError('User not found', 404);
         }
 
+        const newAccessTokenOptions = {
+            expiresIn: (process.env.JWT_EXPIRES_IN || '1h') as string
+        } as SignOptions;
         const newAccessToken = jwt.sign(
             {
                 userId: user.user_id,
@@ -158,9 +163,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
                 tenantId: user.tenant_id
             },
             process.env.JWT_SECRET!,
-            {
-                expiresIn: process.env.JWT_EXPIRES_IN || '1h'
-            }
+            newAccessTokenOptions
         );
 
         res.json({
